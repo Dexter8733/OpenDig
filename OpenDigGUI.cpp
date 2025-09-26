@@ -9,6 +9,7 @@ using namespace std;
 
 HWND hEditUrl, hComboQuery;
 int lastSelection = 5; // default "A"
+HBITMAP hHeaderBmp;
 
 // Launch helper console process
 void LaunchHelper(const string& action, const string& target, const string& extra = "") {
@@ -27,37 +28,51 @@ void LaunchHelper(const string& action, const string& target, const string& extr
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
     case WM_CREATE: {
+        // Load HEADER.BMP
+        hHeaderBmp = (HBITMAP)LoadImage(NULL, "HEADER.BMP", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+        if (!hHeaderBmp) {
+            MessageBox(hwnd, "Failed to load HEADER.BMP", "Error", MB_OK | MB_ICONERROR);
+        }
+
+        // Display bitmap at top
+        if (hHeaderBmp) {
+            HWND hBmp = CreateWindow("STATIC", NULL, WS_VISIBLE | WS_CHILD | SS_BITMAP,
+                                     0, 0, 400, 80, hwnd, NULL, NULL, NULL);
+            SendMessage(hBmp, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hHeaderBmp);
+        }
+
+        int controlsY = 130; // controls pushed further down
+
         // Server / Domain label and edit box
         CreateWindow("STATIC", "Server / Domain:", WS_VISIBLE | WS_CHILD,
-                     10, 10, 100, 20, hwnd, NULL, NULL, NULL);
+                     10, controlsY, 100, 20, hwnd, NULL, NULL, NULL);
         hEditUrl = CreateWindow("EDIT", "", WS_VISIBLE | WS_CHILD | WS_BORDER,
-                                120, 10, 200, 20, hwnd, NULL, NULL, NULL);
+                                120, controlsY, 200, 20, hwnd, NULL, NULL, NULL);
 
         // Query type label and combo box
         CreateWindow("STATIC", "Query Type:", WS_VISIBLE | WS_CHILD,
-                     10, 40, 100, 20, hwnd, NULL, NULL, NULL);
+                     10, controlsY + 30, 100, 20, hwnd, NULL, NULL, NULL);
 
         hComboQuery = CreateWindow("COMBOBOX", "",
                                    WS_VISIBLE | WS_CHILD | CBS_DROPDOWNLIST,
-                                   120, 40, 200, 250, hwnd, NULL, NULL, NULL); // dropdown height = 250
+                                   120, controlsY + 30, 200, 250, hwnd, NULL, NULL, NULL); // dropdown height = 250
 
-        // Add six items: TXT, CNAME, SOA, MX, NS, A
         const char* items[] = { "TXT", "CNAME", "SOA", "MX", "NS", "A" };
         for (int i = 0; i < 6; ++i)
             SendMessage(hComboQuery, CB_ADDSTRING, 0, (LPARAM)items[i]);
 
-        // Default selection is "A" (index 5)
         SendMessage(hComboQuery, CB_SETCURSEL, lastSelection, 0);
 
         // Buttons
         CreateWindow("BUTTON", "Ping", WS_VISIBLE | WS_CHILD,
-                     10, 80, 80, 30, hwnd, (HMENU)1, NULL, NULL);
+                     10, controlsY + 70, 80, 30, hwnd, (HMENU)1, NULL, NULL);
         CreateWindow("BUTTON", "Dig", WS_VISIBLE | WS_CHILD,
-                     100, 80, 80, 30, hwnd, (HMENU)2, NULL, NULL);
+                     100, controlsY + 70, 80, 30, hwnd, (HMENU)2, NULL, NULL);
         CreateWindow("BUTTON", "WHOIS", WS_VISIBLE | WS_CHILD,
-                     190, 80, 80, 30, hwnd, (HMENU)3, NULL, NULL);
+                     190, controlsY + 70, 80, 30, hwnd, (HMENU)3, NULL, NULL);
         CreateWindow("BUTTON", "Traceroute", WS_VISIBLE | WS_CHILD,
-                     280, 80, 90, 30, hwnd, (HMENU)4, NULL, NULL);
+                     280, controlsY + 70, 90, 30, hwnd, (HMENU)4, NULL, NULL);
+
         break;
     }
     case WM_COMMAND: {
@@ -87,6 +102,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         break;
     }
     case WM_DESTROY:
+        if (hHeaderBmp) DeleteObject(hHeaderBmp);
         PostQuitMessage(0);
         break;
     default:
@@ -103,9 +119,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
     wc.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
     RegisterClass(&wc);
 
-    HWND hwnd = CreateWindow("OpenDigGUIClass", "OpenDig v0.03a",
+    HWND hwnd = CreateWindow("OpenDigGUIClass", "OpenDig v0.04a",
                              WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
-                             400, 160, NULL, NULL, hInstance, NULL);
+                             400, 280, NULL, NULL, hInstance, NULL);
 
     ShowWindow(hwnd, nCmdShow);
     UpdateWindow(hwnd);

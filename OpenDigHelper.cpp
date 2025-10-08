@@ -4,10 +4,8 @@
 #include <windows.h>
 #include <iostream>
 #include <string>
-#include <conio.h>
 #include <cstdlib>
-
-#pragma comment(lib, "ws2_32.lib")
+#include <cstring> // for memset
 
 using namespace std;
 
@@ -17,9 +15,12 @@ string whois_query(const string& server, const string& domain) {
     if (WSAStartup(MAKEWORD(2,2), &wsaData) != 0)
         return "WSAStartup failed.\n";
 
-    struct addrinfo hints = {0}, *result;
+    struct addrinfo hints;
+    memset(&hints, 0, sizeof(hints)); // MinGW-safe
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
+
+    struct addrinfo* result;
     if (getaddrinfo(server.c_str(), "43", &hints, &result) != 0) {
         WSACleanup();
         return "DNS resolution failed.\n";
@@ -56,10 +57,10 @@ string whois_query(const string& server, const string& domain) {
     return response;
 }
 
-// Wait for key press before exit
+// Wait for key press before exit (portable)
 void WaitAndExit() {
-    cout << "\nPress any key to close..." << endl;
-    _getch();
+    cout << "\nPress Enter to close..." << endl;
+    cin.get();
 }
 
 int main(int argc, char* argv[]) {

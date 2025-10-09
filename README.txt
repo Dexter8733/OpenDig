@@ -13,3 +13,5 @@ Email: OpenDigOfficial@hotmail.com
 
 I welcome community feedback, ideas, and collaboration.  
 Together, we can build tools for freedom, not profit.
+
+YOU are the authority in charge, not the corporation, it explicitly says in the OpenDig EULA

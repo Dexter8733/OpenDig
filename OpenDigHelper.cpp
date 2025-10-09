@@ -1,7 +1,6 @@
 #define _WIN32_WINNT 0x0501
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#include <windows.h>
 #include <iostream>
 #include <string>
 #include <cstdlib>
@@ -16,9 +15,9 @@ string whois_query(const string& server, const string& domain) {
         return "WSAStartup failed.\n";
 
     struct addrinfo hints;
-    memset(&hints, 0, sizeof(hints)); // MinGW-safe
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_INET;       // IPv4
+    hints.ai_socktype = SOCK_STREAM; // TCP
 
     struct addrinfo* result;
     if (getaddrinfo(server.c_str(), "43", &hints, &result) != 0) {
@@ -57,7 +56,7 @@ string whois_query(const string& server, const string& domain) {
     return response;
 }
 
-// Wait for key press before exit (portable)
+// Wait for Enter before exit
 void WaitAndExit() {
     cout << "\nPress Enter to close..." << endl;
     cin.get();

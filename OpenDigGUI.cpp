@@ -1,9 +1,6 @@
 #define _WIN32_WINNT 0x0501
 #include <windows.h>
-#include <commctrl.h>
 #include <string>
-
-#pragma comment(lib, "comctl32.lib")
 
 using namespace std;
 
@@ -14,8 +11,12 @@ HBITMAP hHeaderBmp;
 // Launch helper console process
 void LaunchHelper(const string& action, const string& target, const string& extra = "") {
     string cmd = "OpenDigHelper.exe " + action + " \"" + target + "\" " + extra;
-    STARTUPINFO si = { sizeof(si) };
+    STARTUPINFO si;
     PROCESS_INFORMATION pi;
+    ZeroMemory(&si, sizeof(si));
+    si.cb = sizeof(si);
+    ZeroMemory(&pi, sizeof(pi));
+
     if (CreateProcess(NULL, (LPSTR)cmd.c_str(), NULL, NULL, FALSE,
                       CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi)) {
         CloseHandle(pi.hProcess);
@@ -28,42 +29,30 @@ void LaunchHelper(const string& action, const string& target, const string& extr
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
     case WM_CREATE: {
-        // Load HEADER.BMP
         hHeaderBmp = (HBITMAP)LoadImage(NULL, "HEADER.BMP", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
-        if (!hHeaderBmp) {
-            MessageBox(hwnd, "Failed to load HEADER.BMP", "Error", MB_OK | MB_ICONERROR);
-        }
-
-        // Display bitmap at top
         if (hHeaderBmp) {
             HWND hBmp = CreateWindow("STATIC", NULL, WS_VISIBLE | WS_CHILD | SS_BITMAP,
                                      0, 0, 400, 80, hwnd, NULL, NULL, NULL);
             SendMessage(hBmp, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hHeaderBmp);
         }
 
-        int controlsY = 130; // controls pushed further down
+        int controlsY = 130;
 
-        // Server / Domain label and edit box
         CreateWindow("STATIC", "Server / Domain:", WS_VISIBLE | WS_CHILD,
                      10, controlsY, 100, 20, hwnd, NULL, NULL, NULL);
         hEditUrl = CreateWindow("EDIT", "", WS_VISIBLE | WS_CHILD | WS_BORDER,
                                 120, controlsY, 200, 20, hwnd, NULL, NULL, NULL);
 
-        // Query type label and combo box
         CreateWindow("STATIC", "Query Type:", WS_VISIBLE | WS_CHILD,
                      10, controlsY + 30, 100, 20, hwnd, NULL, NULL, NULL);
-
         hComboQuery = CreateWindow("COMBOBOX", "",
                                    WS_VISIBLE | WS_CHILD | CBS_DROPDOWNLIST,
-                                   120, controlsY + 30, 200, 250, hwnd, NULL, NULL, NULL); // dropdown height = 250
-
+                                   120, controlsY + 30, 200, 250, hwnd, NULL, NULL, NULL);
         const char* items[] = { "TXT", "CNAME", "SOA", "MX", "NS", "A" };
         for (int i = 0; i < 6; ++i)
             SendMessage(hComboQuery, CB_ADDSTRING, 0, (LPARAM)items[i]);
-
         SendMessage(hComboQuery, CB_SETCURSEL, lastSelection, 0);
 
-        // Buttons
         CreateWindow("BUTTON", "Ping", WS_VISIBLE | WS_CHILD,
                      10, controlsY + 70, 80, 30, hwnd, (HMENU)1, NULL, NULL);
         CreateWindow("BUTTON", "Dig", WS_VISIBLE | WS_CHILD,
@@ -80,13 +69,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         GetWindowText(hEditUrl, buf, sizeof(buf));
         string target(buf);
 
-        // Preserve combo selection
         LRESULT sel = SendMessage(hComboQuery, CB_GETCURSEL, 0, 0);
         if (sel != CB_ERR) lastSelection = (int)sel;
 
         char qtype[32];
         if (sel == CB_ERR) {
-            strcpy(qtype, "A"); // fallback
+            strcpy(qtype, "A");
             SendMessage(hComboQuery, CB_SETCURSEL, lastSelection, 0);
         } else {
             SendMessage(hComboQuery, CB_GETLBTEXT, sel, (LPARAM)qtype);

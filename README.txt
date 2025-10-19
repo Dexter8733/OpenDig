@@ -9,7 +9,7 @@ OpenDig isn’t a product to sell, it’s a tool for empowerment.
 
 If you want to reach out, contribute, or discuss OpenDig, you can contact me at:
 
-Email: OpenDigOfficial@hotmail.com
+Email: officialopendig@outlook.com
 
 I welcome community feedback, ideas, and collaboration.  
 Together, we can build tools for freedom, not profit.
